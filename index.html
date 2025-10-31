@@ -3,725 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Macro: Modelo IS-LM</title>
+    <title>Calculadora Modelo IS-LM Completa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. BOX MODEL GLOBAL */
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
+        /* Estilos personalizados */
+        .positive-change { color: #10b981; } /* Verde para aumento */
+        .negative-change { color: #ef4444; } /* Rojo para disminución */
+        .form-input {
+            width: 100%;
+            padding: 4px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem; /* text-sm */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
-
-        /* 2. CORRECCIÓN AGRESIVA NÚCLEO: Forzar el ajuste a nivel de HTML y BODY */
-        html, body {
-            overflow-x: hidden; /* Aplica la ocultación en ambos */
+        .form-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 1px #3b82f6;
         }
-        * {
-            max-width: 100vw !important; /* Mantiene la anulación forzosa */
-        }
-
-        /* 3. Estilos para los Inputs */
-        .input-group label {
-            display: block;
-            font-size: 0.75rem;
-            color: #4b5563; /* gray-600 */
-            margin-bottom: 2px;
-        }
-        .input-group input {
-            width: 100%; 
-            max-width: 100%; 
-            padding: 0.375rem 0.75rem;
-            border: 1px solid #d1d5db; /* gray-300 */
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-        }
-        
-        /* ... (Otros estilos de Tailwind) ... */
-        .shock-value {
-            color: #10b981; /* green-500 */
-            font-weight: 600;
-        }
-        .balance-button {
-            @apply px-4 py-2 text-sm font-medium rounded-lg transition duration-150 shadow-md;
-        }
-        .balance-button-fiscal {
-             @apply bg-orange-500 hover:bg-orange-600 text-white;
-        }
-        .balance-button-monetary {
-             @apply bg-purple-500 hover:bg-purple-600 text-white;
-        }
-        .balance-button-external {
-             @apply bg-teal-500 hover:bg-teal-600 text-white;
-        }
+        label { display: block; font-size: 0.875rem; color: #4b5563; }
     </style>
 </head>
-<body class="bg-gray-50 py-2 sm:p-6 overflow-x-hidden">
+<body class="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
 
-    <div class="max-w-7xl w-full mx-auto bg-white p-2 sm:p-4 md:p-8 rounded-xl shadow-2xl">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 border-b pb-2">
-             Calculadora Macro: Modelo IS-LM (Equilibrio y Shocks)
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-extrabold text-blue-800 mb-6 border-b pb-2">
+            Calculadora y Simulador del Modelo IS-LM
         </h1>
+        <p class="mb-6 text-gray-600">Aplicación para calcular el equilibrio del modelo IS-LM.</p>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="col-span-1 lg:border-r lg:pr-6 pb-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">1. Parámetros (Situación Original)</h2>
-                <div id="original-inputs" class="space-y-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <div id="original-inputs-container" class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-4">I. Parámetros (Escenario Base)</h2>
+                <form id="is-lm-form" class="space-y-3">
+                    
+                    <p class="font-bold text-gray-600 border-b pb-1 mt-4">Componentes Autónomos</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label>C<sub>0</sub>: <input type="number" step="0.01" id="C0" class="form-input" value="1900"></label>
+                        <label>T<sub>0</sub>: <input type="number" step="0.01" id="T0" class="form-input" value="0"></label>
+                        <label>TR<sub>0</sub>: <input type="number" step="0.01" id="TR0" class="form-input" value="2000"></label>
+                        <label>I<sub>0</sub>: <input type="number" step="0.01" id="I0" class="form-input" value="4600"></label>
+                        <label>G<sub>0</sub>: <input type="number" step="0.01" id="G0" class="form-input" value="3000"></label>
+                        <label>X<sub>0</sub>: <input type="number" step="0.01" id="X0" class="form-input" value="5000"></label>
+                        <label>IM<sub>0</sub>: <input type="number" step="0.01" id="IM0" class="form-input" value="500"></label>
                     </div>
-                <button onclick="calculateAndRenderOriginal()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded-lg transition duration-150 shadow-md mt-4">
-                    Recalcular Equilibrio Base
-                </button>
+
+                    <p class="font-bold text-gray-600 border-b pb-1 mt-4">Propensiones/Sensibilidades</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label>c1 (0-1): <input type="number" step="0.01" id="c1" class="form-input" value="0.8" min="0" max="1"></label>
+                        <label>t (0-1): <input type="number" step="0.01" id="t" class="form-input" value="0.2" min="0" max="1"></label>
+                        <label>b (Ir): <input type="number" step="0.01" id="b" class="form-input" value="30"></label>
+                        <label>m (IMy): <input type="number" step="0.01" id="m" class="form-input" value="0.24"></label>
+                        <label>n (Gy): <input type="number" step="0.01" id="n" class="form-input" value="0"></label>
+                    </div>
+
+                    <p class="font-bold text-gray-600 border-b pb-1 mt-4">Mercado de Dinero (LM)</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label>k (Ly): <input type="number" step="0.01" id="k" class="form-input" value="1"></label>
+                        <label>h (Lr): <input type="number" step="0.01" id="h" class="form-input" value="100"></label>
+                        <label>M/P: <input type="number" step="0.01" id="Mp" class="form-input" value="24500"></label>
+                    </div>
+
+                    <div id="validation-errors-base" class="text-red-500 font-semibold mt-3 hidden text-xs"></div>
+                    
+                    <button type="button" id="calculate-base-btn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-150 mt-4">
+                        Calcular Equilibrio Base (III)
+                    </button>
+                </form>
             </div>
 
-            <div class="col-span-1 lg:pr-6 pb-6">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">2. Equilibrio Original</h2>
-                <div id="results-original" class="space-y-2 text-sm">
-                    <p class="font-bold text-gray-600">Calculando...</p>
+            <div class="lg:col-span-2 space-y-8">
+                
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-blue-700 mb-4">II. Resultados de Equilibrio Base</h2>
+
+                    <div id="initial-results-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border p-4 rounded-lg bg-blue-50">
+                            <p class="text-sm text-gray-500">Renta de Equilibrio (Y_e)</p>
+                            <p id="Y-initial" class="text-3xl font-bold text-blue-900">...</p>
+                        </div>
+                        <div class="border p-4 rounded-lg bg-blue-50">
+                            <p class="text-sm text-gray-500">Tipo de Interés (r_e)</p>
+                            <p id="r-initial" class="text-3xl font-bold text-blue-900">...</p>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <p class="font-bold text-gray-600 border-b pb-1 mt-4">III. Componentes Intermedios</p>
+                            <div class="grid grid-cols-3 gap-2 text-sm mt-2">
+                                <div>A<sub>0</sub> (Gasto Autónomo): <span id="A0-initial" class="font-semibold"></span></div>
+                                <div>&#961 (Prop. Marginal Ag.): <span id="rho-initial" class="font-semibold"></span></div>
+                                <div>&#945 (Multiplicador Simple): <span id="alpha-initial" class="font-semibold"></span></div>
+                                <div>&#947 (Multiplicador Fiscal): <span id="gamma-initial" class="font-semibold"></span></div>
+                                <div>&#946 (Multiplicador Monetario): <span id="beta-initial" class="font-semibold"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <p class="font-bold text-gray-600 border-b pb-1 mt-4">IV. Variables de Gasto y Saldos Sectoriales</p>
+                            <div class="grid grid-cols-3 gap-2 text-sm mt-2">
+                                <div>Consumo (C): <span id="C-initial" class="font-semibold"></span></div>
+                                <div>Inversión (I): <span id="I-initial" class="font-semibold"></span></div>
+                                <div>Gasto P. (G): <span id="G-initial" class="font-semibold"></span></div>
+                                <div>Ahorro P. (Sp): <span id="Sp-initial" class="font-semibold"></span></div>
+                                <div>Saldo P. (SSP): <span id="SSP-initial" class="font-semibold"></span></div>
+                                <div>Saldo E. (SSE/NX): <span id="SSE-initial" class="font-semibold"></span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mt-8">
-                    <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">3. Simulación de Shocks</h2>
-                    <div id="shock-inputs" class="space-y-4">
-                        <p class="text-sm text-gray-500">Modifica los valores a continuación para simular un cambio. Los valores vacíos mantendrán el valor base.</p>
-                        <div id="shocks-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-red-700 mb-4">V. Simulación de Shocks y Análisis (VI)</h2>
+                    <p class="text-gray-500 mb-4">Modifique uno o más parámetros introduciendo <b>el valor final de los mismos</b>, no la variación para calcular el <b>shock</b>.</p>
+
+                    <form id="shock-form" class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            
+                            <div class="p-3 bg-red-50 rounded-lg">
+                                <p class="font-bold text-red-700 mb-2">Política Fiscal</p>
+                                <label class="block text-sm">G<sub>0</sub>: <input type="number" step="0.01" id="shock-G0" class="form-input"></label>
+                                <label class="block text-sm">TR<sub>0</sub>: <input type="number" step="0.01" id="shock-TR0" class="form-input"></label>
+                                <label class="block text-sm">t: <input type="number" step="0.01" id="shock-t" class="form-input" min="0" max="1"></label>
+                                <label class="block text-sm">T<sub>0</sub>: <input type="number" step="0.01" id="shock-T0" class="form-input"></label>
                             </div>
-                        <button onclick="simulateShock()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition duration-150 shadow-md">
+
+                            <div class="p-3 bg-red-50 rounded-lg">
+                                <p class="font-bold text-red-700 mb-2">Política Monetaria</p>
+                                <label class="block text-sm">M/P: <input type="number" step="0.01" id="shock-Mp" class="form-input"></label>
+                            </div>
+
+                            <div class="p-3 bg-red-50 rounded-lg col-span-1 sm:col-span-2">
+                                <p class="font-bold text-red-700 mb-2">Parámetros Estructurales</p>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    <label>C<sub>0</sub>: <input type="number" step="0.01" id="shock-C0" class="form-input"></label>
+                                    <label>I<sub>0</sub>: <input type="number" step="0.01" id="shock-I0" class="form-input"></label>
+                                    <label>b (Ir): <input type="number" step="0.01" id="shock-b" class="form-input"></label>
+                                    <label>m (IMy): <input type="number" step="0.01" id="shock-m" class="form-input"></label>
+                                    <label>k (Ly): <input type="number" step="0.01" id="shock-k" class="form-input"></label>
+                                    <label>h (Lr): <input type="number" step="0.01" id="shock-h" class="form-input"></label>
+                                    <label>X<sub>0</sub>: <input type="number" step="0.01" id="shock-X0" class="form-input"></label>
+                                    <label>IM<sub>0</sub>: <input type="number" step="0.01" id="shock-IM0" class="form-input"></label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="validation-errors-shock" class="text-red-500 font-semibold mt-3 hidden text-xs"></div>
+
+                        <button type="button" id="simulate-shock-btn" class="w-full bg-red-600 text-white py-2 rounded-lg font-semibold hover:bg-red-700 transition duration-150">
                             Simular Shock
                         </button>
+                    </form>
+
+                    <div id="shocks-results" class="mt-6 hidden">
+                        <h3 class="text-xl font-semibold text-red-800 mb-3 border-b pb-1">Tabla Comparativa y Variación (%)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border border-gray-200">
+                                <thead>
+                                    <tr class="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                        <th class="p-3 border-b">Variable</th>
+                                        <th class="p-3 border-b text-center">Base (V)</th>
+                                        <th class="p-3 border-b text-center">Shock (V')</th>
+                                        <th class="p-3 border-b text-center">Var. (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shock-table-body" class="text-gray-700">
+                                    </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-red-800 mt-6 mb-3 border-b pb-1">VI. Mecanismo de Transmisión de Shocks</h3>
+                        <div id="transmission-mechanism" class="p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded-md">
+                            <p class="font-medium" id="transmission-title">...</p>
+                            <p id="transmission-text" class="mt-2 text-sm">...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-semibold text-green-700 mb-4">VII. Reestablecimiento de Saldos (NX=0 o SSP=0)</h2>
+                    <p class="text-gray-500 mb-4">Ajustar una variable para conseguir Saldo Sector Público (SSP=0) o Saldo Exterior (NX=0).</p>
+
+                    <form id="balanced-form" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium">Objetivo de Saldo:</label>
+                                <select id="target-balance" class="form-input mt-1">
+                                    <option value="SSP">SSP = 0 (Equilibrio Fiscal)</option>
+                                    <option value="NX">NX = 0 (Equilibrio Exterior)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium">Variable de Política a Ajustar:</label>
+                                <select id="policy-variable" class="form-input mt-1">
+                                    <option value="G0">Gasto Público (G0)</option>
+                                    <option value="TR0">Transferencias (TR0)</option>
+                                    <option value="T0">Impuesto Autónomo (T0)</option>
+                                    <option value="Mp">Oferta Monetaria Real (M/P)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="button" id="calculate-balanced-btn" class="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition duration-150">
+                            Calcular Ajuste de Equilibrio
+                        </button>
+                    </form>
+
+                    <div id="balanced-results" class="mt-6 hidden p-4 bg-green-50 border-l-4 border-green-500 rounded-md">
+                        <h3 class="text-xl font-semibold text-green-800 mb-3 border-b pb-1">Resultados de Equilibrio Forzado</h3>
+                        <p class="text-sm">Renta Objetivo (Y*): <span id="Y-star" class="font-bold"></span></p>
+                        <p class="text-sm">Interés Objetivo (r*): <span id="r-star" class="font-bold"></span></p>
+                        <p class="text-sm">Ajuste Requerido: <span id="delta-X" class="font-bold text-lg"></span></p>
+                        <p class="text-sm">Nuevo Valor (X*): <span id="X-star" class="font-bold"></span></p>
                     </div>
                 </div>
             </div>
-
-            <div class="col-span-1">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">4. Resultados del Shock y Análisis</h2>
-                
-                <div id="results-shock" class="mb-6 text-sm">
-                    <p class="text-gray-500">Presiona "Simular Shock" para ver la comparación.</p>
-                </div>
-
-                <h3 class="text-lg font-semibold text-blue-700 mb-3 border-t pt-2">5. Mecanismo de Transmisión (IS-LM)</h3>
-                <div id="shock-analysis" class="bg-blue-50 p-4 rounded-lg border border-blue-200 text-sm">
-                    <p class="text-blue-600 italic text-sm">El análisis del mecanismo de transmisión aparecerá aquí tras la simulación.</p>
-                </div>
-            </div>
         </div>
+    </div>
 
-        <div class="mt-12 pt-6 border-t">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">
-                6. Análisis de Política para el Equilibrio de Saldos
-            </h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <div class="bg-gray-100 p-4 sm:p-6 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-semibold text-orange-700 mb-4 border-b pb-2">1. Objetivo: Saldo Sector Público (SSP) = 0</h3>
-                    <p class="text-sm text-gray-600 mb-4">Selecciona la variable de política que deseas ajustar para lograr un presupuesto equilibrado ($T - G - TR₀ = 0$).</p>
-                    
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="calculateBalanceAdjustment('SSP', 'G0')" class="balance-button balance-button-fiscal">Ajustar G₀</button>
-                        <button onclick="calculateBalanceAdjustment('SSP', 'TR0')" class="balance-button balance-button-fiscal">Ajustar TR₀</button>
-                        <button onclick="calculateBalanceAdjustment('SSP', 'T0')" class="balance-button balance-button-fiscal">Ajustar T₀</button>
-                        <button onclick="calculateBalanceAdjustment('SSP', 'M_P')" class="balance-button balance-button-monetary">Ajustar M/P</button>
-                    </div>
-
-                    <div id="ssp-adjustment-result" class="bg-white p-4 rounded-lg border border-orange-300">
-                        <p class="text-gray-500 italic text-sm">Selecciona una variable para calcular el ajuste necesario.</p>
-                    </div>
-                </div>
-
-                <div class="bg-gray-100 p-4 sm:p-6 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-semibold text-teal-700 mb-4 border-b pb-2">2. Objetivo: Saldo Sector Exterior (NX) = 0</h3>
-                    <p class="text-sm text-gray-600 mb-4">Selecciona la variable de política que deseas ajustar para lograr un saldo comercial nulo ($NX = 0$).</p>
-                    
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button onclick="calculateBalanceAdjustment('NX', 'G0')" class="balance-button balance-button-external">Ajustar G₀</button>
-                        <button onclick="calculateBalanceAdjustment('NX', 'TR0')" class="balance-button balance-button-external">Ajustar TR₀</button>
-                        <button onclick="calculateBalanceAdjustment('NX', 'T0')" class="balance-button balance-button-external">Ajustar T₀</button>
-                        <button onclick="calculateBalanceAdjustment('NX', 'M_P')" class="balance-button balance-button-monetary">Ajustar M/P</button>
-                    </div>
-
-                    <div id="nx-adjustment-result" class="bg-white p-4 rounded-lg border border-teal-300">
-                        <p class="text-gray-500 italic text-sm">Selecciona una variable para calcular el ajuste necesario.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-
-    <script>
-        const ROUND = (value) => Math.round(value * 100) / 100;
-        const INITIAL_PARAMS = {
-            C0: 1900, c1: 0.8, T0: 0, t: 0.2, TR0: 2000,
-            I0: 4600, b: 30, G0: 3000, n: 0, 
-            X0: 5000, IM0: 500, m: 0.24,
-            k: 1, h: 100, M_P: 24500,
-            E: 0, vx: 0, vm: 0, r_star: 0 
-        };
-        const FISCAL_PARAMS = ['G0', 'TR0', 't', 'T0'];
-        const MONETARY_PARAMS = ['M_P'];
-        const STRUCTURAL_PARAMS = ['C0', 'c1', 'I0', 'b', 'm', 'k', 'h', 'X0', 'IM0', 'n'];
-
-        let currentParams = {...INITIAL_PARAMS};
-        let originalResults = {};
-
-        function calculateEquilibrium(params, isOriginal = false) {
-             const rho = 1 - params.c1 * (1 - params.t) + params.n + params.m;
-             if (params.h === 0 || rho === 0 || (params.t - params.n) === 0 || params.b === 0 || params.m === 0) {
-                  return { error: "División por cero. Revisa parámetros 'h', 'rho', 't-n', 'b' o 'm'." };
-             }
-             const alpha = 1 / rho;
-             const common_denominator = params.h + alpha * params.b * params.k;
-             if (common_denominator === 0) {
-                  return { error: "División por cero en multiplicadores. Revisa parámetros 'h', 'alpha', 'b', o 'k'." };
-             }
-             const A0 = params.C0 + params.c1 * (params.TR0 - params.T0) + params.I0 + params.G0 + (params.X0 - params.IM0);
-             const gamma = (alpha * params.h) / common_denominator;
-             const beta = (alpha * params.b) / common_denominator;
-             const Ye = gamma * A0 + beta * params.M_P;
-             const re = (params.k / params.h) * Ye - params.M_P / params.h;
-             const T = params.T0 + params.t * Ye;
-             const C = params.C0 + params.c1 * (Ye - T + params.TR0);
-             const I = params.I0 - params.b * re;
-             const G = params.G0 + params.n * Ye;
-             const NX_SSE = params.X0 - params.IM0 + (params.vx - params.vm) * params.E - params.m * Ye;
-             const Sp = -params.C0 + (1 - params.c1) * (Ye - T + params.TR0);
-             const SSP = T - G - params.TR0;
-
-             const results = {
-                 A0: ROUND(A0), rho: ROUND(rho), alpha: ROUND(alpha), gamma: ROUND(gamma), beta: ROUND(beta),
-                 Ye: ROUND(Ye), re: ROUND(re),
-                 C: ROUND(C), I: ROUND(I), G: ROUND(G), NX_SSE: ROUND(NX_SSE),
-                 Sp: ROUND(Sp), SSP: ROUND(SSP), T: ROUND(T),
-             };
-
-             if (isOriginal) {
-                 originalResults = results;
-             }
-             return results;
-        }
-
-        function renderResults(results, targetId, title) {
-             const container = document.getElementById(targetId);
-             const isShock = targetId === 'results-shock';
-             const shockClass = isShock ? 'shock-value' : 'font-medium';
-             const multipliersHtml = `
-                 <h3 class="text-md font-bold text-gray-700 mb-3 border-t pt-2">Multiplicadores y Autónomos</h3>
-                 <div class="space-y-1 text-sm">
-                     <p>Gasto Autónomo Total (A₀): <span class="${shockClass}">${results.A0}</span></p>
-                     <p>Coeficiente de Fugas (ρ): <span class="${shockClass}">${results.rho}</span></p>
-                     <p>Multiplicador Simple (α): <span class="${shockClass}">${results.alpha}</span></p>
-                     <p>Multiplicador Fiscal (γ): <span class="${shockClass}">${results.gamma}</span></p>
-                     <p>Multiplicador Monetario (β): <span class="${shockClass}">${results.beta}</span></p>
-                 </div>
-             `;
-             container.innerHTML = `
-                 <h3 class="text-md font-bold ${isShock ? 'text-green-700' : 'text-gray-700'} mb-3">${title}</h3>
-                 <div class="space-y-1 text-sm">
-                     <p><strong>Renta de Equilibrio (Y_e):</strong> <span class="${shockClass}">${results.Ye}</span></p>
-                     <p><strong>Tipo de Interés (r_e):</strong> <span class="${shockClass}">${results.re}</span></p>
-                 </div>
-                 ${multipliersHtml}
-                 <p class="pt-2 font-semibold text-gray-700 border-t mt-3">Variables de Gasto y Saldos:</p>
-                 <div class="space-y-1 text-sm">
-                     <p>Consumo (C): ${results.C}</p>
-                     <p>Inversión (I): ${results.I}</p>
-                     <p>Gasto Público (G): ${results.G}</p>
-                     <p>Exportaciones Netas (NX / SSE): ${results.NX_SSE}</p>
-                     <p>Ahorro Privado (S_p): ${results.Sp}</p>
-                     <p>Impuestos Totales (T): ${results.T}</p>
- 		     <p>Saldo del Sector Exterior (NX / SSE): ${results.NX_SSE}</p>
-                     <p>Saldo Sector Público (SSP): ${results.SSP}</p>
-                 </div>
-             `;
-        }
-        
-        function getOriginalParamsFromForm() {
-             const params = {};
-             let hasError = false;
-             Object.keys(INITIAL_PARAMS).forEach(key => {
-                 const input = document.getElementById(`${key}_orig`);
-                 if (input) {
-                     const value = input.value;
-                     const parsedValue = parseFloat(value);
-                     if (isNaN(parsedValue)) {
-                         if (value.trim() !== "") {
-                            alert(`Valor inválido para ${key} en parámetros originales.`);
-                            hasError = true;
-                         }
-                         params[key] = INITIAL_PARAMS[key];
-                     } else {
-                         if ((key === 'c1' || key === 't') && (parsedValue < 0 || parsedValue > 1)) {
-                             alert(`El valor para ${key} debe estar entre 0 y 1. Valor actual: ${parsedValue}`);
-                             hasError = true;
-                             return;
-                         }
-                         params[key] = parsedValue;
-                     }
-                 } else {
-                     params[key] = INITIAL_PARAMS[key];
-                 }
-             });
-             return hasError ? null : params;
-        }
-
-        function calculateAndRenderOriginal() {
-             const newParams = getOriginalParamsFromForm();
-             if (newParams) {
-                 currentParams = newParams;
-                 const results = calculateEquilibrium(currentParams, true);
-                 if (results.error) {
-                     document.getElementById('results-original').innerHTML = `<p class="text-red-600 font-bold">${results.error}</p>`;
-                     document.getElementById('ssp-adjustment-result').innerHTML = `<p class="text-red-600 italic text-sm">Error: No se puede calcular el equilibrio base.</p>`;
-                     document.getElementById('nx-adjustment-result').innerHTML = `<p class="text-red-600 italic text-sm">Error: No se puede calcular el equilibrio base.</p>`;
-                     return;
-                 }
-                 renderResults(results, 'results-original', 'Valores de Equilibrio');
-                 createInputForm(currentParams, true);
-                 document.getElementById('results-shock').innerHTML = `<p class="text-gray-500">Presiona "Simular Shock" para ver la comparación.</p>`;
-                 document.getElementById('shock-analysis').innerHTML = `<p class="text-blue-600 italic text-sm">El análisis del mecanismo de transmisión aparecerá aquí tras la simulación.</p>`;
-                 document.getElementById('ssp-adjustment-result').innerHTML = `<p class="text-gray-500 italic text-sm">Selecciona una variable para calcular el ajuste necesario.</p>`;
-                 document.getElementById('nx-adjustment-result').innerHTML = `<p class="text-gray-500 italic text-sm">Selecciona una variable para calcular el ajuste necesario.</p>`;
-             }
-        }
-        
-        function createInputForm(params, isShock = false) {
-             let html = '';
-             const paramLabels = {
-                 C0: 'C₀ (Consumo Aut.)', c1: 'c₁ (PMC)', T0: 'T₀ (Imp. Aut.)', t: 't (Tasa Imp.)', TR0: 'TR₀ (Transf.)', 
-                 I0: 'I₀ (Inv. Aut.)', b: 'b (Sensib. I)', G0: 'G₀ (Gasto Aut.)', n: 'n (Sensib. G)', 
-                 X0: 'X₀ (Exp. Aut.)', IM0: 'IM₀ (Imp. Aut.)', m: 'm (PMI)', 
-                 k: 'k (Sensib. Lᵧ)', h: 'h (Sensib. Lᵣ)', M_P: 'M/P (Oferta Mon.)', 
-                 E: 'E', vx: 'vₓ', vm: 'vₘ', r_star: 'r*'
-             };
-             const containerId = isShock ? 'shocks-form' : 'original-inputs';
-             const container = document.getElementById(containerId);
-             const allVisibleParams = [...FISCAL_PARAMS, ...MONETARY_PARAMS, ...STRUCTURAL_PARAMS];
-
-             const renderInput = (key, value) => `
-                 <div class="input-group">
-                     <label for="${key}_${isShock ? 'shock' : 'orig'}">${paramLabels[key]}</label>
-                     <input type="number" step="any" id="${key}_${isShock ? 'shock' : 'orig'}" 
-                            value="${isShock ? '' : value}" 
-                            class="bg-white">
-                 </div>
-             `;
-             
-             if (isShock) {
-                 html += '<h4 class="text-sm font-semibold col-span-full sm:col-span-2 text-gray-600 border-b pb-1 mt-2">Política Fiscal</h4>';
-                 FISCAL_PARAMS.forEach(key => html += renderInput(key, params[key]));
-                 
-                 html += '<h4 class="text-sm font-semibold col-span-full sm:col-span-2 text-gray-600 border-b pb-1 mt-2">Política Monetaria</h4>';
-                 MONETARY_PARAMS.forEach(key => html += renderInput(key, params[key]));
-
-                 html += '<h4 class="text-sm font-semibold col-span-full sm:col-span-2 text-gray-600 border-b pb-1 mt-2">Parámetros Estructurales</h4>';
-                 STRUCTURAL_PARAMS.forEach(key => html += renderInput(key, params[key]));
-                 
-             } else {
-                 allVisibleParams.forEach(key => {
-                     html += renderInput(key, params[key]);
-                 });
-             }
-             container.innerHTML = html;
-        }
-
-        function simulateShock() {
-             const newParams = { ...currentParams }; 
-             const shockedParams = {};
-             let hasError = false;
-
-             Object.keys(currentParams).forEach(key => {
-                 const input = document.getElementById(`${key}_shock`);
-                 if (input && input.value !== "") {
-                     const newValue = parseFloat(input.value);
-                     if (isNaN(newValue)) {
-                         alert(`Valor inválido para ${key}. Debe ser un número.`);
-                         hasError = true;
-                         return;
-                     }
-                     if ((key === 'c1' || key === 't') && (newValue < 0 || newValue > 1)) {
-                         alert(`El valor para ${key} debe estar entre 0 y 1. Valor actual: ${newValue}`);
-                         hasError = true;
-                         return;
-                     }
-                     if (newValue !== currentParams[key]) {
-                         shockedParams[key] = { original: currentParams[key], new: newValue };
-                     }
-                     newParams[key] = newValue;
-                 }
-             });
-
-             if (hasError) return;
-
-             const shockResults = calculateEquilibrium(newParams);
-             if (shockResults.error) {
-                 document.getElementById('results-shock').innerHTML = `<p class="text-red-600 font-bold">${shockResults.error}</p>`;
-                 document.getElementById('shock-analysis').innerHTML = `<p class="text-red-600 italic text-sm">No se pudo realizar el análisis debido a un error de cálculo.</p>`;
-                 return;
-             }
-             
-             // === INICIO DE LA REFRACTORIZACIÓN DE TABLAS (Se mantiene el código de la opción 1: lista apilada en móvil) ===
-             const isMobile = window.innerWidth < 640;
-             let comparisonHtmlBody = '';
-             let comparisonHtml = '';
-
-             Object.keys(originalResults).map(key => {
-                 if (['Ye', 're', 'C', 'I', 'SSP', 'NX_SSE'].includes(key)) {
-                     const original = originalResults[key];
-                     const current = shockResults[key];
-                     const change = ROUND(((current - original) / (original !== 0 ? original : 1)) * 100);
-                     const changeSign = change > 0 ? '↑' : (change < 0 ? '↓' : '—');
-                     const changeColor = change > 0 ? 'text-green-600' : (change < 0 ? 'text-red-600' : 'text-gray-500');
-
-                     const label = {
-                         Ye: 'Y (Renta)', re: 'r (Interés)', C: 'C (Consumo)', I: 'I (Inversión)',
-                         SSP: 'SSP', NX_SSE: 'NX'
-                     }[key] || key;
-                     
-                     if (isMobile) {
-                         // MOBILE (Lista apilada)
-                         comparisonHtmlBody += `
-                             <div class="py-2 border-b border-gray-100 flex justify-between items-center">
-                                 <span class="font-medium text-gray-700">${label}</span>
-                                 <div class="flex flex-col items-end text-right text-xs">
-                                     <span class="text-gray-500">Base: ${original} | Shock: <strong class="shock-value">${current}</strong></span>
-                                     <span class="${changeColor} font-bold text-sm mt-1">${change !== 0 ? change.toFixed(2) + '%' : '0.00%'} ${changeSign}</span>
-                                 </div>
-                             </div>
-                         `;
-                     } else {
-                         // DESKTOP (Tabla original)
-                         comparisonHtmlBody += `
-                             <tr class="hover:bg-gray-50">
-                                 <td class="px-1 py-1 border-b">${label}</td>
-                                 <td class="px-1 py-1 border-b">${original}</td>
-                                 <td class="px-1 py-1 border-b shock-value">${current}</td>
-                                 <td class="px-1 py-1 border-b ${changeColor} font-bold text-xs">${change !== 0 ? change.toFixed(2) + '%' : '0.00%'} ${changeSign}</td>
-                             </tr>
-                         `;
-                     }
-                 }
-             });
-
-             if (isMobile) {
-                 comparisonHtml = `<div class="space-y-1">${comparisonHtmlBody}</div>`;
-             } else {
-                 comparisonHtml = `
-                     <table class="min-w-full text-sm border-collapse">
-                         <thead>
-                             <tr class="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                 <th class="px-1 py-1 border-b">Var.</th>
-                                 <th class="px-1 py-1 border-b">Base</th>
-                                 <th class="px-1 py-1 border-b">Shock</th>
-                                 <th class="px-1 py-1 border-b">% Δ</th>
-                             </tr>
-                         </thead>
-                         <tbody>
-                             ${comparisonHtmlBody}
-                         </tbody>
-                     </table>
-                 `;
-             }
-             // === FIN DE LA REFRACTORIZACIÓN DE TABLAS ===
-
-
-             document.getElementById('results-shock').innerHTML = comparisonHtml + `
-                  <h3 class="text-md font-bold text-gray-700 mb-3 border-t pt-4">Multiplicadores y Autónomos (Post-Shock)</h3>
-                  <div class="space-y-1 text-sm">
-                     <p>Gasto Autónomo Total (A₀): <span class="shock-value">${shockResults.A0}</span></p>
-                     <p>Coeficiente de Fugas (ρ): <span class="shock-value">${shockResults.rho}</span></p>
-                     <p>Multiplicador Simple (α): <span class="shock-value">${shockResults.alpha}</span></p>
-                     <p>Multiplicador Fiscal (γ): <span class="shock-value">${shockResults.gamma}</span></p>
-                     <p>Multiplicador Monetario (β): <span class="shock-value">${shockResults.beta}</span></p>
-                  </div>
-                  <h3 class="text-md font-bold text-gray-700 mb-3 border-t pt-4">Variables de Gasto y Saldos (Post-Shock)</h3>
-                  <div class="space-y-1 text-sm">
-                     <p>Consumo (C): <span class="shock-value">${shockResults.C}</span></p>
-                     <p>Inversión (I): <span class="shock-value">${shockResults.I}</span></p>
-                     <p>Gasto Público (G): <span class="shock-value">${shockResults.G}</span></p>
-                     <p>Impuestos Totales (T): <span class="shock-value">${shockResults.T}</span></p>
-                  </div>
-             `;
-             
-             document.getElementById('shock-analysis').innerHTML = generateAnalysis(shockedParams);
-        }
-        
-        function generateAnalysis(shockedParams) {
-             const keys = Object.keys(shockedParams);
-             if (keys.length === 0) {
-                 return `<p class="text-blue-600 italic text-sm">No se ha modificado ningún parámetro. El equilibrio es el mismo.</p>`;
-             }
-             if (keys.length > 1) {
-                  return `<p class="text-red-700 font-bold">¡ADVERTENCIA!</p><p class="text-gray-700 text-sm">Se han modificado múltiples parámetros. El efecto final es una ${keys.length}-vía compleja. A continuación, se detallan los efectos de los shocks individuales.</p>
-                         ${keys.map(key => `
-                             <p class="mt-2 text-sm font-semibold">${key}:</p>
-                             <p class="text-xs text-gray-700">${getSingleShockMechanism(key, shockedParams[key].new > shockedParams[key].original)}</p>
-                         `).join('')}
-                  `;
-             }
-             const key = keys[0];
-             const isIncrease = shockedParams[key].new > shockedParams[key].original;
-             return `<p class="text-blue-800 font-bold">Análisis: Shock en ${key}</p><p class="text-sm">${getSingleShockMechanism(key, isIncrease)}</p>`;
-        }
-        
-        function getSingleShockMechanism(paramKey, isIncrease) {
-            const action = isIncrease ? 'Aumento' : 'Reducción';
-            const change = isIncrease ? '↑' : '↓'; 
-            
-            // --- Mecanismo de Shocks Autónomos que impactan directamente en DA (G0, I0, C0, X0, IM0) ---
-            if (['G0', 'I0', 'C0', 'X0', 'IM0'].includes(paramKey)) {
-                const isExpansive = (paramKey !== 'IM0' && isIncrease) || (paramKey === 'IM0' && !isIncrease);
-                const curveShift = isExpansive ? 'la <strong>derecha</strong>' : 'la <strong>izquierda</strong>';
-                const initialEffect = isExpansive ? 'aumenta' : 'reduce';
-                const Y_arrow = isExpansive ? '↑' : '↓';
-                const r_arrow = isExpansive ? '↑' : '↓';
-                const Ly_verb = isExpansive ? 'incrementa' : 'reduce';
-                const exceso_monetario = isExpansive ? 'exceso de demanda' : 'exceso de oferta'; // CORRECCIÓN
-                const I_crowding_verb = isExpansive ? 'reduce' : 'aumenta';
-                const crowding_name = isExpansive ? 'Efecto Expulsión (Crowding-Out)' : 'Efecto Atracción (Crowding-In)';
-                const policy_type = (paramKey === 'G0') ? (isExpansive ? 'Política Fiscal Expansiva' : 'Política Fiscal Contractiva') : 'Shock de Demanda Autónoma';
-
-                let initialStep;
-                if (paramKey === 'G0') initialStep = `Un ${action} de <strong>Gasto Público</strong> (G₀ ${change}) ${initialEffect} directamente el Gasto Agregado Autónomo (A₀).`;
-                else if (paramKey === 'I0') initialStep = `Un ${action} de <strong>Inversión Autónoma</strong> (I₀ ${change}) ${initialEffect} directamente el Gasto Agregado Autónomo (A₀).`;
-                else if (paramKey === 'C0') initialStep = `Un ${action} de <strong>Consumo Autónomo</strong> (C₀ ${change}) ${initialEffect} directamente el Gasto Agregado Autónomo (A₀).`;
-                else if (paramKey === 'X0') initialStep = `Un ${action} de <strong>Exportaciones Autónomas</strong> (X₀ ${change}) ${initialEffect} la Demanda Agregada.`;
-                else if (paramKey === 'IM0') initialStep = `Una ${action} de <strong>Importaciones Autónomas</strong> (IM₀ ${change}) ${initialEffect} la Demanda Agregada.`;
-
-                return `
-                    <p class="text-blue-800 font-bold">Mecanismo de Transmisión: ${policy_type} en ${paramKey}</p>
-                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
-                        <li><strong>Shock Inicial y DA:</strong> ${initialStep}</li>
-                        <li><strong>Desplazamiento de Curva (IS):</strong> El <strong>A₀</strong> alterado provoca un desplazamiento de la curva <strong>IS</strong> hacia ${curveShift}.</li>
-                        <li><strong>Reacción en Renta (Y):</strong> Este desplazamiento genera un exceso de demanda/oferta en el mercado de bienes, lo que, por el multiplicador, fuerza a la Renta a <strong>Y ${Y_arrow}</strong> (nuevo equilibrio temporal).</li>
-                        <li><strong>Mercado Monetario (LM):</strong> El <strong>Y ${Y_arrow}</strong> ${Ly_verb} la Demanda de Dinero por motivo transacciones (<strong>L(Y)</strong>). Con la oferta monetaria (M/P) fija, esto causa un <strong>${exceso_monetario}</strong> de dinero.</li>
-                        <li><strong>Reacción en Interés (r):</strong> Para restablecer el equilibrio monetario, el tipo de interés se ve forzado a <strong>r ${r_arrow}</strong> (movimiento a lo largo de <strong>LM</strong>).</li>
-                        <li><strong>Efecto Crowding Out/In:</strong> El <strong>r ${r_arrow}</strong> ${I_crowding_verb} la <strong>Inversión (I)</strong>, causando el <strong>${crowding_name}</strong>, que mitiga el efecto total sobre la Renta.</li>
-                        <li><strong>Resultado Final:</strong> El nuevo equilibrio (IS-LM) resulta en una <strong>Renta ${Y_arrow}</strong> y un <strong>Tipo de Interés ${r_arrow}</strong>.</li>
-                    </ol>
-                `;
-            }
-
-            // --- Mecanismo de Shocks Fiscales que impactan a través de la Renta Disponible (TR0, T0) ---
-            if (paramKey === 'TR0' || paramKey === 'T0') {
-                const isTransfer = paramKey === 'TR0';
-                const isExpansive = isTransfer ? isIncrease : !isIncrease;
-                const curveShift = isExpansive ? 'la <strong>derecha</strong>' : 'la <strong>izquierda</strong>';
-                const Y_d_effect = isExpansive ? 'aumenta' : 'reduce';
-                const DA_effect = isExpansive ? 'eleva' : 'reduce';
-                const Y_arrow = isExpansive ? '↑' : '↓';
-                const r_arrow = isExpansive ? '↑' : '↓';
-                const Ly_verb = isExpansive ? 'incrementa' : 'reduce';
-                const exceso_monetario = isExpansive ? 'exceso de demanda' : 'exceso de oferta'; // CORRECCIÓN
-                const I_crowding_verb = isExpansive ? 'reduce' : 'aumenta';
-                const crowding_name = isExpansive ? 'Efecto Expulsión (Crowding-Out)' : 'Efecto Atracción (Crowding-In)';
-                const initialStep = isTransfer
-                    ? `Un ${action} de <strong>Transferencias</strong> (TR₀ ${change}) ${Y_d_effect} la Renta Disponible (<strong>Y_d</strong>) y, por la PMC (c₁), impulsa/contrae el Consumo (C).`
-                    : `Un ${action} de <strong>Impuestos Autónomos</strong> (T₀ ${change}) ${Y_d_effect} la Renta Disponible (<strong>Y_d</strong>) y, por la PMC (c₁), reduce/impulsa el Consumo (C).`;
-                
-                return `
-                    <p class="text-blue-800 font-bold">Mecanismo de Transmisión: Política Fiscal en ${paramKey}</p>
-                    <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
-                        <li><strong>Shock Inicial y Y_d:</strong> ${initialStep} Esto ${DA_effect} la Demanda Agregada (DA).</li>
-                        <li><strong>Desplazamiento de Curva (IS):</strong> El <strong>DA</strong> alterado provoca un desplazamiento de la curva <strong>IS</strong> hacia ${curveShift}.</li>
-                        <li><strong>Reacción en Renta (Y):</strong> Este desplazamiento genera un exceso de demanda/oferta en el mercado de bienes, lo que, por el multiplicador, fuerza a la Renta a <strong>Y ${Y_arrow}</strong> (nuevo equilibrio temporal).</li>
-                        <li><strong>Mercado Monetario (LM):</strong> El <strong>Y ${Y_arrow}</strong> ${Ly_verb} la Demanda de Dinero por motivo transacciones (<strong>L(Y)</strong>). Con la oferta monetaria (M/P) fija, esto causa un <strong>${exceso_monetario}</strong> de dinero.</li>
-                        <li><strong>Reacción en Interés (r):</strong> Para restablecer el equilibrio monetario, el tipo de interés se ve forzado a <strong>r ${r_arrow}</strong> (movimiento a lo largo de <strong>LM</strong>).</li>
-                        <li><strong>Efecto Crowding Out/In:</strong> El <strong>r ${r_arrow}</strong> ${I_crowding_verb} la <strong>Inversión (I)</strong>, causando el <strong>${crowding_name}</strong>, que mitiga el efecto total sobre la Renta.</li>
-                        <li><strong>Resultado Final:</strong> El nuevo equilibrio (IS-LM) resulta en una <strong>Renta ${Y_arrow}</strong> y un <strong>Tipo de Interés ${r_arrow}</strong>.</li>
-                    </ol>
-                `;
-            }
-
-            // --- Mecanismo de Shocks de Política Monetaria (M/P) ---
-            switch (paramKey) {
-                case 'M_P': { 
-                    const Y_arrow = isIncrease ? '↑' : '↓';
-                    const r_arrow = isIncrease ? '↓' : '↑';
-                    const supply_demand = isIncrease ? 'exceso de oferta' : 'exceso de demanda';
-                    const bond_action = isIncrease ? 'comprando bonos' : 'vendiendo bonos';
-                    const price_effect = isIncrease ? 'sube' : 'cae';
-                    const curveShift = isIncrease ? 'la <strong>derecha</strong>' : 'la <strong>izquierda</strong>';
-                    const I_effect_verb = isIncrease ? 'estimula' : 'desincentiva';
-                    const I_arrow = isIncrease ? '↑' : '↓';
-                    const DA_effect_verb = isIncrease ? 'incrementa' : 'reduce';
-                    const I_effect_reason = isIncrease ? 'ya que el coste de endeudamiento es menor' : 'ya que el coste de endeudamiento es mayor';
-                    const policy_type = isIncrease ? 'expansiva' : 'contractiva';
-
-                    return `
-                        <p class="text-blue-800 font-bold">Mecanismo de Transmisión: Shock en M/P</p>
-                        <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
-                            <li><strong>Shock Inicial (LM):</strong> Un ${action} de M/P (<strong>M/P</strong> ${change}) genera un <strong>${supply_demand}</strong> de dinero en el mercado monetario.</li>
-                            <li><strong>Reacción en el Mercado de Bonos:</strong> Los agentes intentan deshacerse/obtener dinero <strong>${bond_action}</strong>. Esto provoca que el precio de los bonos ${price_effect}, lo que fuerza al Tipo de Interés <strong>r</strong> a <strong>r ${r_arrow}</strong>.</li>
-                            <li><strong>Desplazamiento de Curva (LM):</strong> La caída/subida del tipo de interés (<strong>r ${r_arrow}</strong>) para cualquier nivel de renta (Y) indica un desplazamiento de la curva <strong>LM</strong> hacia ${curveShift}.</li>
-                            <li><strong>Reacción en la Inversión (I):</strong> El <strong>r ${r_arrow}</strong> ${I_effect_verb} la Inversión Privada (<strong>I ${I_arrow}</strong>), ${I_effect_reason}.</li>
-                            <li><strong>Efecto Multiplicador (Movimiento a lo largo de IS):</strong> El <strong>I ${I_arrow}</strong> ${DA_effect_verb} la Demanda Agregada (<strong>DA ${I_arrow}</strong>), lo que, por el multiplicador, provoca el <strong>Y ${Y_arrow}</strong>.</li>
-                            <li><strong>Resultado Final:</strong> La política monetaria <strong>${policy_type}</strong> resulta en una <strong>Renta ${Y_arrow}</strong> y un <strong>Tipo de Interés ${r_arrow}</strong>.</li>
-                        </ol>
-                    `;
-                }
-                case 't': { 
-                    const isExpansive = !isIncrease;
-                    const curveShift = isExpansive ? 'la <strong>derecha</strong>' : 'la <strong>izquierda</strong>';
-                    const incomeEffect = isIncrease ? 'reduce' : 'aumenta';
-                    const DA_effect = isExpansive ? 'eleva' : 'reduce';
-                    const Y_arrow = isExpansive ? '↑' : '↓';
-                    const r_arrow = isExpansive ? '↑' : '↓';
-                    const Ly_verb = isExpansive ? 'incrementa' : 'reduce';
-                    const exceso_monetario = isExpansive ? 'exceso de demanda' : 'exceso de oferta'; // CORRECCIÓN
-                    const I_crowding_verb = isExpansive ? 'reduce' : 'aumenta';
-                    const crowding_name = isExpansive ? 'Efecto Expulsión (Crowding-Out)' : 'Efecto Atracción (Crowding-In)';
-                    const fugas_effect = isIncrease ? 'aumentan' : 'reducen';
-                    const multiplicador_effect = isIncrease ? 'menor' : 'mayor';
-
-                    return `
-                        <p class="text-blue-800 font-bold">Mecanismo de Transmisión: Shock en la Tasa Impositiva (t)</p>
-                        <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
-                            <li><strong>Shock Inicial y Multiplicador:</strong> Un ${action} de <strong>t</strong> ${incomeEffect} la Renta Disponible (Y_d) para un nivel de Y dado. Las fugas ${fugas_effect} y el multiplicador α es <strong>${multiplicador_effect}</strong>.</li>
-                            <li><strong>Desplazamiento (IS):</strong> Esto ${DA_effect} la Demanda Agregada (DA). La <strong>IS</strong> se vuelve <strong>${isIncrease ? 'más vertical (empinada)' : 'más horizontal (plana)'}</strong> y se desplaza hacia ${curveShift}.</li>
-                            <li><strong>Reacción en Renta (Y):</strong> La nueva demanda provoca <strong>Y ${Y_arrow}</strong>.</li>
-                            <li><strong>Mercado Monetario (LM):</strong> El <strong>Y ${Y_arrow}</strong> ${Ly_verb} la Demanda de Dinero (<strong>L(Y)</strong>), forzando <strong>r ${r_arrow}</strong> (movimiento a lo largo de <strong>LM</strong>).</li>
-                            <li><strong>Efecto Crowding Out/In:</strong> El <strong>r ${r_arrow}</strong> ${I_crowding_verb} la <strong>Inversión (I)</strong>.</li>
-                            <li><strong>Resultado Final:</strong> El nuevo equilibrio resulta en una <strong>Renta ${Y_arrow}</strong> y un <strong>Tipo de Interés ${r_arrow}</strong>. La <strong>efectividad</strong> de la Política Fiscal es <strong>${multiplicador_effect}</strong>.</li>
-                        </ol>
-                    `;
-                }
-                case 'c1': { 
-                    const isExpansive = isIncrease; // Un aumento en c1 es expansivo
-                    const curveShift = isExpansive ? 'la <strong>derecha</strong>' : 'la <strong>izquierda</strong>';
-                    const effect = isExpansive ? 'aumenta' : 'reduce';
-                    const DA_effect = isExpansive ? 'eleva' : 'reduce';
-                    const Y_arrow = isExpansive ? '↑' : '↓';
-                    const r_arrow = isExpansive ? '↑' : '↓';
-                    const Ly_verb = isExpansive ? 'incrementa' : 'reduce';
-                    const exceso_monetario = isExpansive ? 'exceso de demanda' : 'exceso de oferta'; // CORRECCIÓN
-                    const I_crowding_verb = isExpansive ? 'reduce' : 'aumenta';
-                    const crowding_name = isExpansive ? 'Efecto Expulsión (Crowding-Out)' : 'Efecto Atracción (Crowding-In)';
-                    
-                    return `
-                        <p class="text-blue-800 font-bold">Mecanismo de Transmisión: Shock en PMC (c₁)</p>
-                        <ol class="list-decimal list-inside space-y-2 pl-4 text-sm">
-                            <li><strong>Shock Inicial y Multiplicador:</strong> Un ${action} de la <strong>c₁</strong> ${effect} el consumo (C) para cualquier Y_d dado. Esto hace que el multiplicador α sea <strong>${isIncrease ? 'mayor' : 'menor'}</strong>.</li>
-                            <li><strong>Desplazamiento (IS):</strong> Esto ${DA_effect} la Demanda Agregada (DA). La curva <strong>IS</strong> se vuelve <strong>${isIncrease ? 'más horizontal (plana)' : 'más vertical (empinada)'}</strong> y se desplaza hacia ${curveShift}.</li>
-                            <li><strong>Reacción en Renta (Y):</strong> La nueva demanda provoca <strong>Y ${Y_arrow}</strong>.</li>
-                            <li><strong>Mercado Monetario (LM):</strong> El <strong>Y ${Y_arrow}</strong> ${Ly_verb} la Demanda de Dinero (<strong>L(Y)</strong>), forzando <strong>r ${r_arrow}</strong> (movimiento a lo largo de <strong>LM</strong>).</li>
-                            <li><strong>Efecto Crowding Out/In:</strong> El <strong>r ${r_arrow}</strong> ${I_crowding_verb} la <strong>Inversión (I)</strong>, causando el <strong>${crowding_name}</strong>.</li>
-                            <li><strong>Resultado Final:</strong> El nuevo equilibrio resulta en una <strong>Renta ${Y_arrow}</strong> y un <strong>Tipo de Interés ${r_arrow}</strong>.</li>
-                        </ol>
-                    `;
-                }
-                case 'b': 
-                    return `Un ${action} de <strong>b</strong> ${isIncrease ? 'aumenta' : 'reduce'} la sensibilidad de la Inversión a los cambios en r, haciendo que la curva <strong>IS</strong> sea ${isIncrease ? 'más horizontal (plana)' : 'más vertical (empinada)'}. Efecto: Se <strong>${isIncrease ? 'reduce' : 'amplifica'}</strong> el efecto expulsión de la Política Fiscal y se <strong>${isIncrease ? 'aumenta' : 'reduce'}</strong> la efectividad de la Política Monetaria.`;
-                case 'k': 
-                    return `Un ${action} de <strong>k</strong> significa que se demanda ${isIncrease ? 'más' : 'menos'} dinero por ΔY, haciendo que la curva <strong>LM</strong> sea ${isIncrease ? 'más vertical (empinada)' : 'más horizontal (plana)'}. Efecto: Se <strong>${isIncrease ? 'amplifica' : 'reduce'}</strong> el cambio en r ante ΔY, lo que <strong>${isIncrease ? 'aumenta' : 'reduce'}</strong> el efecto expulsión de la política fiscal (menor efectividad fiscal).`;
-                case 'h': 
-                    return `Un ${action} de <strong>h</strong> significa que la Demanda de Dinero es ${isIncrease ? 'más' : 'menos'} sensible al tipo de interés, haciendo que la curva <strong>LM</strong> sea ${isIncrease ? 'más horizontal (plana)' : 'más vertical (empinada)'}. Efecto: Se <strong>${isIncrease ? 'reduce' : 'amplifica'}</strong> el cambio en r ante ΔY o ΔM/P, lo que <strong>${isIncrease ? 'aumenta' : 'reduce'}</strong> la efectividad de la política fiscal y <strong>${isIncrease ? 'reduce' : 'aumenta'}</strong> la de la política monetaria.`;
-                case 'm': 
-                    return `Un ${action} de <strong>m</strong> ${isIncrease ? 'aumenta' : 'reduce'} las fugas de la economía (a través de las importaciones), lo que <strong>${isIncrease ? 'reduce' : 'aumenta'}</strong> el multiplicador α. Efecto: La curva <strong>IS</strong> se vuelve ${isIncrease ? 'más vertical (empinada)' : 'más horizontal (plana)'}. La efectividad de la Política Fiscal <strong>${isIncrease ? 'se reduce' : 'aumenta'}</strong>.`;
-                default:
-                    return `Análisis no disponible para el parámetro ${paramKey}.`;
-            }
-        }
-        
-        function calculateBalanceAdjustment(target, policyVariable) {
-             const baseParams = getOriginalParamsFromForm();
-             if (!baseParams) return; 
-             const baseResults = calculateEquilibrium(baseParams, true);
-             if (baseResults.error) {
-                 const targetId = target === 'SSP' ? 'ssp-adjustment-result' : 'nx-adjustment-result';
-                 document.getElementById(targetId).innerHTML = `<p class="text-red-600 font-bold">${baseResults.error}</p>`;
-                 return;
-             }
-             const Y_e_orig = baseResults.Ye;
-             const c1 = baseParams.c1;
-             const m = baseParams.m;
-             const t = baseParams.t;
-             const n = baseParams.n;
-             const X0 = baseParams.X0;
-             const IM0 = baseParams.IM0;
-             const gamma = baseResults.gamma; 
-             const beta = baseResults.beta;
-             let deltaValue = 0;
-             let Y_e_star = 0;
-             try {
-                 if (target === 'SSP') {
-                     const SSP_orig = originalResults.SSP;
-                     const term_Ye_in_SSP = t - n;
-                     if (policyVariable === 'G0') {
-                         deltaValue = SSP_orig / (1 - gamma * term_Ye_in_SSP);
-                         Y_e_star = Y_e_orig - gamma * deltaValue;
-                     } else if (policyVariable === 'TR0') {
-                         deltaValue = -SSP_orig / (-baseParams.c1 + baseParams.c1 * gamma * term_Ye_in_SSP);
-                         Y_e_star = Y_e_orig + c1 * gamma * deltaValue;
-                     } else if (policyVariable === 'T0') {
-                         deltaValue = -SSP_orig / (1 - baseParams.c1 * gamma * term_Ye_in_SSP);
-                         Y_e_star = Y_e_orig - c1 * gamma * deltaValue;
-                     } else if (policyVariable === 'M_P') {
-                         deltaValue = -SSP_orig / (beta * term_Ye_in_SSP);
-                         Y_e_star = Y_e_orig + beta * deltaValue;
-                     }
-                 } else if (target === 'NX') {
-                     const Y_NX_zero = ROUND((X0 - IM0) / m);
-                     const Delta_Y = Y_NX_zero - Y_e_orig;
-                     Y_e_star = Y_NX_zero;
-                     if (policyVariable === 'G0') {
-                         deltaValue = Delta_Y / gamma;
-                     } else if (policyVariable === 'TR0') {
-                         deltaValue = Delta_Y / (c1 * gamma);
-                     } else if (policyVariable === 'T0') {
-                         deltaValue = -Delta_Y / (c1 * gamma);
-                     } else if (policyVariable === 'M_P') {
-                         deltaValue = Delta_Y / beta;
-                     }
-                 }
-             } catch (e) {
-                  const targetId = target === 'SSP' ? 'ssp-adjustment-result' : 'nx-adjustment-result';
-                  document.getElementById(targetId).innerHTML = `<p class="text-red-600 font-bold">Error en el cálculo: ${e.message}. Revisa tus parámetros iniciales o si el multiplicador es 0.</p>`;
-                  return;
-             }
-             const newParams = { ...baseParams };
-             newParams[policyVariable] = baseParams[policyVariable] + deltaValue;
-             const finalResults = calculateEquilibrium(newParams);
-             const r_e_star = finalResults.re;
-             const targetId = target === 'SSP' ? 'ssp-adjustment-result' : 'nx-adjustment-result';
-             const originalBalance = target === 'SSP' ? baseResults.SSP : baseResults.NX_SSE;
-             const variableName = {G0: 'G₀', TR0: 'TR₀', T0: 'T₀', M_P: 'M/P'}[policyVariable] || policyVariable;
-             const colorClass = target === 'SSP' ? 'text-orange-700' : 'text-teal-700';
-             const originalBalanceLabel = target === 'SSP' ? 'Déficit/Superávit' : 'Déficit/Superávit Externo';
-             if (Y_e_star < 0 || finalResults.error || isNaN(deltaValue) || Math.abs(finalResults[target === 'SSP' ? 'SSP' : 'NX_SSE']) > 1) {
-                  document.getElementById(targetId).innerHTML = `
-                     <p class="text-red-600 font-bold">Ajuste No Viable (Error en Cálculo/Lógica o Renta Negativa)</p>
-                     <p class="text-sm">El cambio requerido en <strong>${variableName}</strong> (${ROUND(deltaValue)}) para alcanzar el equilibrio resulta en una renta de ${ROUND(Y_e_star)} o en una indeterminación matemática. Revisa los parámetros 't' y 'n'.</p>
-                     <p class="text-xs text-gray-500 mt-2">Saldo Original: ${originalBalance}</p>
-                  `;
-                  return;
-             }
-             document.getElementById(targetId).innerHTML = `
-                 <h4 class="text-lg font-bold ${colorClass}">Ajuste mediante ${variableName}</h4>
-                 <div class="space-y-2 text-sm">
-                     <p>${originalBalanceLabel} Inicial: <span class="font-medium">${ROUND(originalBalance)}</span></p>
-                     <p class="font-bold">Ajuste Necesario en ${variableName}:</p>
-                     <p class="text-xl font-extrabold text-blue-600">${ROUND(deltaValue)}</p>
-                     <p class="text-gray-700 italic">El nuevo valor de <strong>${variableName}</strong> debe ser: <strong>${ROUND(baseParams[policyVariable] + deltaValue)}</strong></p>
-                     <p class="pt-2 font-bold">Nuevo Equilibrio (Saldo = 0):</p>
-                     <p>Renta de Equilibrio (Y*): <span class="font-medium">${ROUND(Y_e_star)}</span></p>
-                     <p>Tipo de Interés (r*): <span class="font-medium">${ROUND(r_e_star)}</span></p>
-                     <p class="text-xs text-gray-500 mt-2">${target} resultante: ${ROUND(finalResults[target === 'SSP' ? 'SSP' : 'NX_SSE'])} (Objetivo: 0)</p>
-                 </div>
-             `;
-        }
-
-        window.onload = () => {
-             createInputForm(currentParams, false);
-             createInputForm(currentParams, true);
-             const results = calculateEquilibrium(currentParams, true);
-             if (results.error) {
-                  document.getElementById('results-original').innerHTML = `<p class="text-red-600 font-bold">${results.error}</p>`;
-             } else {
-                  renderResults(results, 'results-original', 'Valores de Equilibrio');
-             }
-        };
-    </script>
-
+    <script src="script.js"></script>
 </body>
 </html>
